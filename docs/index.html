@@ -43,16 +43,18 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
+    /* One field per line, always */
     .flex-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .field-group {
       display: flex;
       flex-direction: column;
-      margin-bottom: 8px;
+      margin-bottom: 4px;
+      width: 100%;
     }
 
     .field-group label {
@@ -68,24 +70,13 @@
       font-size: 0.9rem;
       border: 1px solid #ccc;
       border-radius: 4px;
-      min-width: 140px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     textarea {
       min-height: 50px;
       resize: vertical;
-    }
-
-    .field-group.small {
-      flex: 1 1 150px;
-    }
-
-    .field-group.medium {
-      flex: 1 1 220px;
-    }
-
-    .field-group.large {
-      flex: 1 1 320px;
     }
 
     .btn {
@@ -146,7 +137,7 @@
       border: 1px solid #ccc;
     }
 
-    /* Base crop-marker style (mid-level size) */
+    /* Base crop-marker style */
     .crop-marker {
       width: 20px;
       height: 20px;
@@ -162,18 +153,17 @@
     }
 
     .ring-low {
-      border-color: #2e7d32;   /* green */
+      border-color: #2e7d32;
     }
 
     .ring-moderate {
-      border-color: #f9a825;   /* yellow */
+      border-color: #f9a825;
     }
 
     .ring-high {
-      border-color: #c62828;   /* red */
+      border-color: #c62828;
     }
 
-    /* Scale-dependent marker sizing via map zoom classes */
     .zoom-small .crop-marker {
       transform: scale(0.7);
     }
@@ -186,12 +176,11 @@
       transform: scale(1.15);
     }
 
-    /* Hide elements visually but keep for JS */
     .hidden {
       display: none !important;
     }
 
-    /* Mobile-friendly tweaks */
+    /* Mobile tweaks */
     @media (max-width: 768px) {
       body {
         margin: 0;
@@ -200,15 +189,6 @@
         padding: 12px;
         border-radius: 0;
         box-shadow: none;
-      }
-      .flex-row {
-        flex-direction: column;
-        gap: 8px;
-      }
-      .field-group.small,
-      .field-group.medium,
-      .field-group.large {
-        flex: 1 1 100%;
       }
       .btn {
         width: 100%;
@@ -234,22 +214,22 @@
       <h2>Farmer Field Form (Input)</h2>
       <form id="pestForm" onsubmit="event.preventDefault(); addRecord();">
         <div class="flex-row">
-          <div class="field-group small">
+          <div class="field-group">
             <label for="date">Date</label>
             <input type="date" id="date" />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="barangay">Barangay</label>
             <input type="text" id="barangay" placeholder="e.g. San Juan" />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="farmerId">Farmer / Field ID</label>
             <input type="text" id="farmerId" placeholder="e.g. F-001" />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="crop">Crop</label>
             <select id="crop" onchange="updatePestOptions()">
               <option value="">-- Select crop --</option>
@@ -262,19 +242,19 @@
             </select>
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="pest">Pest (Common Name)</label>
             <select id="pest" onchange="updateScientificName()">
               <option value="">-- Select pest --</option>
             </select>
           </div>
 
-          <div class="field-group large">
+          <div class="field-group">
             <label for="scientificName">Scientific Name</label>
             <input type="text" id="scientificName" readonly />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="growthStage">Growth Stage</label>
             <select id="growthStage">
               <option value="">-- Select stage --</option>
@@ -285,7 +265,7 @@
             </select>
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="weather">Weather Condition</label>
             <select id="weather">
               <option value="">-- Select weather --</option>
@@ -296,53 +276,52 @@
             </select>
           </div>
 
-          <!-- Smart Sampling Unit -->
-          <div class="field-group medium">
+          <div class="field-group">
             <label for="samplingUnit">Sampling Unit</label>
             <select id="samplingUnit"></select>
             <div id="samplingHint" class="note"></div>
           </div>
 
-          <div class="field-group small">
+          <div class="field-group">
             <label for="plantsSampled">No. of Plants Sampled</label>
             <input type="number" id="plantsSampled" min="0" />
           </div>
 
-          <div class="field-group small">
+          <div class="field-group">
             <label for="pestCount">Pest Count per Unit</label>
             <input type="number" id="pestCount" min="0" step="0.1" />
           </div>
 
-          <div class="field-group small">
+          <div class="field-group">
             <label for="damage">Percent Damage (%)</label>
             <input type="number" id="damage" min="0" max="100" step="0.1"
                    oninput="updateSeverityPreview()" />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label>Severity (auto)</label>
             <input type="text" id="severityPreview" readonly />
           </div>
 
-          <!-- Coordinates (hidden but still used) -->
-          <div class="field-group small hidden">
+          <!-- Coordinates hidden but still used -->
+          <div class="field-group hidden">
             <label for="lat">Latitude</label>
             <input type="number" id="lat" step="0.000001" />
           </div>
 
-          <div class="field-group small hidden">
+          <div class="field-group hidden">
             <label for="lng">Longitude</label>
             <input type="number" id="lng" step="0.000001" />
           </div>
 
-          <div class="field-group medium">
+          <div class="field-group">
             <label>&nbsp;</label>
             <button type="button" class="btn btn-secondary" onclick="useMyLocation()">
               📍 Use my location
             </button>
           </div>
 
-          <div class="field-group large">
+          <div class="field-group">
             <label for="notes">Notes / Recommendation</label>
             <textarea id="notes" placeholder="e.g. Apply biological control, monitor next 3 days."></textarea>
           </div>
@@ -362,13 +341,13 @@
       <h2>Filters & Download</h2>
       <p class="note">Filters apply to both the map and the downloadable CSV.</p>
       <div class="flex-row">
-        <div class="field-group medium">
+        <div class="field-group">
           <label for="filterBarangay">Filter by Barangay</label>
           <input type="text" id="filterBarangay" placeholder="e.g. San Juan"
                  oninput="updateMapMarkers();" />
         </div>
 
-        <div class="field-group medium">
+        <div class="field-group">
           <label for="filterCrop">Filter by Crop</label>
           <select id="filterCrop" onchange="updateMapMarkers();">
             <option value="">All crops</option>
@@ -381,11 +360,10 @@
           </select>
         </div>
 
-        <div class="field-group medium">
+        <div class="field-group">
           <label for="filterPest">Filter by Pest</label>
           <select id="filterPest" onchange="updateMapMarkers();">
             <option value="">All pests</option>
-            <!-- options populated by JS -->
           </select>
         </div>
       </div>
@@ -413,11 +391,11 @@
     crossorigin=""
   ></script>
 
-  <!-- Leaflet MarkerCluster JS -->
+  <!-- Leaflet MarkerCluster JS (correct file name) -->
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // Same working Web App URL
+    // Your working Web App URL
     const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwL275ZF10RP-DUySTsZErI4tZdlAwczFRTte1kz_cHYYZvt1V7GT6evTGhx2BRBeIL/exec';
 
     const pestMap = {
@@ -479,7 +457,6 @@
     };
 
     const pestSamplingUnits = {
-      // RICE
       "Rice stem borer": ["Hill", "Tiller", "Plant"],
       "Brown planthopper": ["Hill", "Plant", "Stem base"],
       "Green leafhopper": ["Hill", "Plant", "Leaf"],
@@ -488,33 +465,27 @@
       "Armyworm": ["Plant", "Row-meter"],
       "Leaf folder": ["Leaf", "Plant"],
 
-      // CORN
       "Corn borer": ["Plant", "Stem", "Ear"],
       "Fall armyworm": ["Plant", "Whorl", "Row-meter"],
       "Corn earworm": ["Ear", "Plant"],
       "Aphids": ["Leaf", "Plant"],
       "Cutworms": ["Plant", "Hill", "Row-meter"],
 
-      // CASSAVA
       "Cassava mealybug": ["Leaf", "Shoot", "Plant"],
       "Cassava green mite": ["Leaf", "Plant"],
       "Whitefly": ["Leaf", "Plant"],
       "Spiraling whitefly": ["Leaf", "Plant"],
       "Scale insects": ["Leaf", "Stem", "Plant"],
 
-      // TOMATO
       "Tomato fruitworm": ["Fruit", "Plant"],
       "Thrips": ["Leaf", "Flower", "Plant"],
       "Leafminers": ["Leaf", "Plant"],
 
-      // EGGPLANT
       "Eggplant fruit and shoot borer": ["Shoot", "Fruit", "Plant"],
 
-      // OKRA
       "Fruit borers": ["Fruit", "Plant"],
       "Leafhoppers": ["Leaf", "Plant"],
 
-      // fallback
       "_default": ["Hill", "Plant", "Leaf", "Panicle/Fruit", "Row-meter"]
     };
 
@@ -526,7 +497,7 @@
         minZoom: 5,
         maxZoom: 18,
         zoomControl: true
-      }).setView([12.5, 122], 5); // center of PH
+      }).setView([12.5, 122], 5);
 
       const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
@@ -555,10 +526,16 @@
         "Dark Mode (Carto)": dark
       };
 
-      markersLayer = L.markerClusterGroup();
-      map.addLayer(markersLayer);
-
-      L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+      if (L.markerClusterGroup) {
+        markersLayer = L.markerClusterGroup();
+        map.addLayer(markersLayer);
+        L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+      } else {
+        // Fallback: simple layer group if plugin fails
+        console.warn("MarkerCluster plugin not loaded; using simple LayerGroup.");
+        markersLayer = L.layerGroup().addTo(map);
+        L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+      }
 
       updateZoomScaleClass();
       map.on('zoomend', updateZoomScaleClass);
@@ -734,7 +711,9 @@
     }
 
     function addMarker(record) {
-      if (!record.lat || !record.lng) return;
+      if (!markersLayer) return;
+      if (record.lat == null || isNaN(record.lat) || record.lng == null || isNaN(record.lng)) return;
+
       const icon = makeCropIcon(record.crop, record.severity);
       const marker = L.marker([record.lat, record.lng], { icon });
       const popupContent = `
@@ -749,7 +728,6 @@
       markersLayer.addLayer(marker);
     }
 
-    // Send to Google Sheet (same as working version)
     function sendToGoogleSheet(data) {
       const status = document.getElementById("syncStatus");
       if (!SHEET_WEBAPP_URL) {
@@ -815,13 +793,11 @@
       updateMapMarkers();
     }
 
-    // Clear all records in UI (map + local array; sheet stays)
     function clearAllRecordsUI() {
       records.length = 0;
       if (markersLayer) markersLayer.clearLayers();
     }
 
-    // Load from Google Sheet → rebuild records + map
     function loadFromSheet() {
       const status = document.getElementById("syncStatus");
       if (status) {
@@ -865,13 +841,12 @@
         .catch(err => {
           console.error("Error loading from Google Sheet:", err);
           if (status) {
-            status.textContent = "Error loading from Google Sheet";
+            status.textContent = "Error loading from Google Sheet – check Web App URL or script output.";
             status.className = "status status-error";
           }
         });
     }
 
-    // Filters helpers (use records[], not table)
     function getFilters() {
       const fb = document.getElementById("filterBarangay").value.trim().toLowerCase();
       const fc = document.getElementById("filterCrop").value;
@@ -889,19 +864,16 @@
       });
     }
 
-    // Rebuild markers based on filters
     function updateMapMarkers() {
       if (!markersLayer) return;
       markersLayer.clearLayers();
 
       const filtered = getFilteredRecords();
       filtered.forEach(rec => {
-        if (!rec.lat || !rec.lng) return;
         addMarker(rec);
       });
     }
 
-    // Build pest filter dropdown (union of all pests)
     function populatePestFilter() {
       const filterPest = document.getElementById("filterPest");
       if (!filterPest) return;
@@ -921,7 +893,6 @@
       });
     }
 
-    // CSV utilities
     function csvEscape(value) {
       if (value === null || value === undefined) return "";
       const str = String(value);
@@ -998,7 +969,7 @@
       initMap();
       autoFillDate();
       populatePestFilter();
-      updateSamplingUnits("", ""); // general default on load
+      updateSamplingUnits("", "");
     });
   </script>
 </body>
