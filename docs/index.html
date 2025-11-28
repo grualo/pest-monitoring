@@ -185,7 +185,7 @@
     @media (max-width: 768px) {
       body {
         margin: 0;
-        font-size: 24px;          /* base text bigger */
+        font-size: 24px;
       }
 
       .container {
@@ -380,7 +380,8 @@
 
         <div class="field-group">
           <label for="filterCrop">Filter by Crop</label>
-          <select id="filterCrop" onchange="updateMapMarkers();">
+          <!-- 🌾 when crop changes, also update pest options -->
+          <select id="filterCrop" onchange="onFilterCropChange();">
             <option value="">All crops</option>
             <option value="Rice">Rice</option>
             <option value="Corn">Corn</option>
@@ -903,23 +904,50 @@
       });
     }
 
-    function populatePestFilter() {
+    // 🔁 For the view filters: pest options depend on selected crop
+    function updateFilterPestOptions() {
+      const filterCrop = document.getElementById("filterCrop").value;
       const filterPest = document.getElementById("filterPest");
       if (!filterPest) return;
-      const pestSet = new Set();
 
-      Object.keys(pestMap).forEach(crop => {
-        pestMap[crop].forEach(p => pestSet.add(p.common));
-      });
-
-      const allPests = Array.from(pestSet).sort();
+      const previous = filterPest.value;
       filterPest.innerHTML = '<option value="">All pests</option>';
-      allPests.forEach(p => {
-        const opt = document.createElement("option");
-        opt.value = p;
-        opt.textContent = p;
-        filterPest.appendChild(opt);
-      });
+
+      if (filterCrop && pestMap[filterCrop]) {
+        // Only pests for the selected crop
+        pestMap[filterCrop].forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p.common;
+          opt.textContent = p.common;
+          filterPest.appendChild(opt);
+        });
+      } else {
+        // No crop selected -> show all pests (union)
+        const pestSet = new Set();
+        Object.keys(pestMap).forEach(crop => {
+          pestMap[crop].forEach(p => pestSet.add(p.common));
+        });
+        Array.from(pestSet).sort().forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          filterPest.appendChild(opt);
+        });
+      }
+
+      // Try to keep previous selection if still valid
+      if (previous) {
+        const options = Array.from(filterPest.options).map(o => o.value);
+        if (options.includes(previous)) {
+          filterPest.value = previous;
+        }
+      }
+    }
+
+    // When filterCrop changes
+    function onFilterCropChange() {
+      updateFilterPestOptions();
+      updateMapMarkers();
     }
 
     function csvEscape(value) {
@@ -997,8 +1025,8 @@
     document.addEventListener("DOMContentLoaded", () => {
       initMap();
       autoFillDate();
-      populatePestFilter();
       updateSamplingUnits("", "");
+      updateFilterPestOptions(); // initial populate for view filter
     });
   </script>
 </body>
