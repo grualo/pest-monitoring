@@ -95,6 +95,7 @@
       cursor: pointer;
       font-size: 0.9rem;
       margin-top: 8px;
+      margin-right: 6px;
     }
 
     .btn-primary {
@@ -110,39 +111,6 @@
     .btn-warning {
       background-color: #fbc02d;
       color: #333;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-      font-size: 0.85rem;
-    }
-
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px 8px;
-      text-align: left;
-    }
-
-    thead {
-      background-color: #eeeeee;
-    }
-
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
-
-    .severity-low {
-      background-color: #c6efce;
-    }
-
-    .severity-moderate {
-      background-color: #ffeb9c;
-    }
-
-    .severity-high {
-      background-color: #ffc7ce;
     }
 
     .section {
@@ -168,10 +136,6 @@
 
     .status-error {
       color: #c62828;
-    }
-
-    .dashboard-table {
-      max-width: 450px;
     }
 
     #map {
@@ -220,6 +184,39 @@
 
     .zoom-large .crop-marker {
       transform: scale(1.15);
+    }
+
+    /* Hide elements visually but keep for JS */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Mobile-friendly tweaks */
+    @media (max-width: 768px) {
+      body {
+        margin: 0;
+      }
+      .container {
+        padding: 12px;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .flex-row {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .field-group.small,
+      .field-group.medium,
+      .field-group.large {
+        flex: 1 1 100%;
+      }
+      .btn {
+        width: 100%;
+        margin-right: 0;
+      }
+      #map {
+        height: 300px;
+      }
     }
   </style>
 </head>
@@ -327,15 +324,15 @@
             <input type="text" id="severityPreview" readonly />
           </div>
 
-          <!-- Coordinates + use my location -->
-          <div class="field-group small">
+          <!-- Coordinates (hidden but still used) -->
+          <div class="field-group small hidden">
             <label for="lat">Latitude</label>
-            <input type="number" id="lat" step="0.000001" placeholder="e.g. 16.332" />
+            <input type="number" id="lat" step="0.000001" />
           </div>
 
-          <div class="field-group small">
+          <div class="field-group small hidden">
             <label for="lng">Longitude</label>
-            <input type="number" id="lng" step="0.000001" placeholder="e.g. 120.350" />
+            <input type="number" id="lng" step="0.000001" />
           </div>
 
           <div class="field-group medium">
@@ -360,29 +357,20 @@
       </form>
     </div>
 
-    <!-- Map -->
+    <!-- Filters + Download BEFORE map -->
     <div class="section">
-      <h2>Map of Pest Records</h2>
-      <p class="note">
-        Markers: crop emoji + colored ring (green = Low, yellow = Moderate, red = High).  
-        Map respects filters below; markers cluster when many overlap. Icons scale slightly with zoom.
-      </p>
-      <div id="map"></div>
-    </div>
-
-    <!-- Filters + Data Table -->
-    <div class="section">
-      <h2>Encoded Records</h2>
+      <h2>Filters & Download</h2>
+      <p class="note">Filters apply to both the map and the downloadable CSV.</p>
       <div class="flex-row">
         <div class="field-group medium">
-          <label for="filterBarangay">Filter by Barangay (dashboard + table + map)</label>
+          <label for="filterBarangay">Filter by Barangay</label>
           <input type="text" id="filterBarangay" placeholder="e.g. San Juan"
-                 oninput="filterTable(); updateDashboard(); updateMapMarkers();" />
+                 oninput="updateMapMarkers();" />
         </div>
 
         <div class="field-group medium">
-          <label for="filterCrop">Filter by Crop (table + map)</label>
-          <select id="filterCrop" onchange="filterTable(); updateDashboard(); updateMapMarkers();">
+          <label for="filterCrop">Filter by Crop</label>
+          <select id="filterCrop" onchange="updateMapMarkers();">
             <option value="">All crops</option>
             <option value="Rice">Rice</option>
             <option value="Corn">Corn</option>
@@ -394,53 +382,27 @@
         </div>
 
         <div class="field-group medium">
-          <label for="filterPest">Filter by Pest (table + map)</label>
-          <select id="filterPest" onchange="filterTable(); updateDashboard(); updateMapMarkers();">
+          <label for="filterPest">Filter by Pest</label>
+          <select id="filterPest" onchange="updateMapMarkers();">
             <option value="">All pests</option>
             <!-- options populated by JS -->
           </select>
         </div>
       </div>
 
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Barangay</th>
-            <th>Farmer / Field ID</th>
-            <th>Crop</th>
-            <th>Pest (Common)</th>
-            <th>Scientific Name</th>
-            <th>Growth Stage</th>
-            <th>Weather</th>
-            <th>Sampling Unit</th>
-            <th>No. Plants</th>
-            <th>Pest Count / Unit</th>
-            <th>% Damage</th>
-            <th>Severity</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody id="dataBody"></tbody>
-      </table>
+      <button type="button" class="btn btn-primary" onclick="downloadFilteredCSV()">
+        ⬇ Download Filtered Records (CSV)
+      </button>
     </div>
 
-    <!-- Dashboard -->
+    <!-- Map -->
     <div class="section">
-      <h2>Barangay-Level Summary Dashboard</h2>
+      <h2>Map of Pest Records</h2>
       <p class="note">
-        Dashboard is based on current (visible) records in the table with filters applied.
+        Markers: crop emoji + colored ring (green = Low, yellow = Moderate, red = High).  
+        Map respects filters above; markers cluster when many overlap. Icons scale slightly with zoom.
       </p>
-      <table class="dashboard-table">
-        <thead>
-          <tr>
-            <th>Crop</th>
-            <th>Total Records</th>
-            <th>High Severity Alerts</th>
-          </tr>
-        </thead>
-        <tbody id="dashboardBody"></tbody>
-      </table>
+      <div id="map"></div>
     </div>
   </div>
 
@@ -455,7 +417,7 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // >>>> YOUR WEB APP URL (already set from your code) <<<<
+    // Same working Web App URL
     const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwL275ZF10RP-DUySTsZErI4tZdlAwczFRTte1kz_cHYYZvt1V7GT6evTGhx2BRBeIL/exec';
 
     const pestMap = {
@@ -506,7 +468,6 @@
       ]
     };
 
-    // Default sampling units per crop (before pest is chosen)
     const cropDefaultUnits = {
       "Rice": ["Hill", "Tiller", "Leaf", "Panicle"],
       "Corn": ["Plant", "Row-meter", "Whorl", "Ear"],
@@ -517,7 +478,6 @@
       "_default": ["Hill", "Plant", "Leaf", "Panicle/Fruit", "Row-meter"]
     };
 
-    // Suggested sampling units based on pest "type"
     const pestSamplingUnits = {
       // RICE
       "Rice stem borer": ["Hill", "Tiller", "Plant"],
@@ -554,11 +514,10 @@
       "Fruit borers": ["Fruit", "Plant"],
       "Leafhoppers": ["Leaf", "Plant"],
 
-      // general fallback
+      // fallback
       "_default": ["Hill", "Plant", "Leaf", "Panicle/Fruit", "Row-meter"]
     };
 
-    const crops = ["Rice", "Corn", "Cassava", "Tomato", "Eggplant", "Okra"];
     const records = [];
     let map, markersLayer;
 
@@ -569,7 +528,6 @@
         zoomControl: true
       }).setView([12.5, 122], 5); // center of PH
 
-      // Base layers
       const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; OpenStreetMap contributors'
@@ -597,18 +555,15 @@
         "Dark Mode (Carto)": dark
       };
 
-      // Marker cluster group
       markersLayer = L.markerClusterGroup();
       map.addLayer(markersLayer);
 
       L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
 
-      // Set initial zoom scale class
       updateZoomScaleClass();
       map.on('zoomend', updateZoomScaleClass);
     }
 
-    // Add/remove zoom-dependent classes on map container
     function updateZoomScaleClass() {
       if (!map) return;
       const z = map.getZoom();
@@ -663,7 +618,6 @@
       pestSelect.innerHTML = '<option value="">-- Select pest --</option>';
       sciInput.value = "";
 
-      // set default sampling units for this crop
       updateSamplingUnits(crop, "");
 
       if (!crop || !pestMap[crop]) return;
@@ -686,8 +640,6 @@
       }
       const match = pestMap[crop].find(p => p.common === pest);
       if (match) sciInput.value = match.sci;
-
-      // update sampling units based on pest
       updateSamplingUnits(crop, pest);
     }
 
@@ -711,7 +663,7 @@
       document.getElementById("severityPreview").value = "";
       document.getElementById("pest").innerHTML = '<option value="">-- Select pest --</option>';
       autoFillDate();
-      updateSamplingUnits("", "");  // reset sampling unit to general default
+      updateSamplingUnits("", "");
       const status = document.getElementById("syncStatus");
       if (status) {
         status.textContent = "";
@@ -719,7 +671,6 @@
       }
     }
 
-    // Smart sampling unit updater
     function updateSamplingUnits(crop, pestName) {
       const su = document.getElementById("samplingUnit");
       const hint = document.getElementById("samplingHint");
@@ -751,15 +702,14 @@
       }
     }
 
-    // Crop → emoji mapping
     function getCropEmoji(crop) {
       switch (crop) {
         case "Rice": return "🌾";
         case "Corn": return "🌽";
-        case "Cassava": return "🥔";  // root stand-in
+        case "Cassava": return "🥔";
         case "Tomato": return "🍅";
         case "Eggplant": return "🍆";
-        case "Okra": return "🥒";    // okra-like pod
+        case "Okra": return "🥒";
         default: return "🌱";
       }
     }
@@ -799,42 +749,7 @@
       markersLayer.addLayer(marker);
     }
 
-    // Helper: create table row
-    function addRowToTable(data) {
-      const tbody = document.getElementById("dataBody");
-      const tr = document.createElement("tr");
-      const cells = [
-        data.date,
-        data.barangay,
-        data.farmerId,
-        data.crop,
-        data.pest,
-        data.sci,
-        data.growth,
-        data.weather,
-        data.unit,
-        data.plants,
-        data.pestCount,
-        data.damage,
-        data.severity,
-        data.notes
-      ];
-
-      cells.forEach((val, idx) => {
-        const td = document.createElement("td");
-        td.textContent = val;
-        if (idx === 12) {
-          if (data.severity === "Low") td.classList.add("severity-low");
-          if (data.severity === "Moderate") td.classList.add("severity-moderate");
-          if (data.severity === "High") td.classList.add("severity-high");
-        }
-        tr.appendChild(td);
-      });
-
-      tbody.appendChild(tr);
-    }
-
-    // === NEW: Option 1 — actually send to your Google Sheet ===
+    // Send to Google Sheet (same as working version)
     function sendToGoogleSheet(data) {
       const status = document.getElementById("syncStatus");
       if (!SHEET_WEBAPP_URL) {
@@ -846,7 +761,6 @@
         return;
       }
 
-      // Fire-and-forget POST; even if it fails, local add still works
       fetch(SHEET_WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -887,7 +801,6 @@
         lng: parseFloat(document.getElementById("lng").value)
       };
 
-      // keep your original required fields
       if (!data.crop || !data.pest || data.damage === "") {
         alert("Please fill at least Crop, Pest, and % Damage.");
         return;
@@ -896,25 +809,19 @@
       data.severity = computeSeverity(data.damage);
       records.push(data);
 
-      // send to Google Sheet (async)
       sendToGoogleSheet(data);
-
-      // update UI
-      addRowToTable(data);
+      addMarker(data);
       clearForm();
-      updateDashboard();
-      filterTable();
       updateMapMarkers();
     }
 
-    // Clear all records in UI (not in sheet)
+    // Clear all records in UI (map + local array; sheet stays)
     function clearAllRecordsUI() {
       records.length = 0;
-      document.getElementById("dataBody").innerHTML = "";
       if (markersLayer) markersLayer.clearLayers();
     }
 
-    // Load from Google Sheet → rebuild records, table, map
+    // Load from Google Sheet → rebuild records + map
     function loadFromSheet() {
       const status = document.getElementById("syncStatus");
       if (status) {
@@ -946,11 +853,8 @@
               lng: r.lng !== "" && r.lng !== null ? parseFloat(r.lng) : null
             };
             records.push(rec);
-            addRowToTable(rec);
           });
 
-          updateDashboard();
-          filterTable();
           updateMapMarkers();
 
           if (status) {
@@ -967,55 +871,33 @@
         });
     }
 
-    function filterTable() {
+    // Filters helpers (use records[], not table)
+    function getFilters() {
       const fb = document.getElementById("filterBarangay").value.trim().toLowerCase();
       const fc = document.getElementById("filterCrop").value;
       const fp = document.getElementById("filterPest").value;
-      const rows = document.querySelectorAll("#dataBody tr");
+      return { fb, fc, fp };
+    }
 
-      rows.forEach(row => {
-        const barangay = row.children[1].textContent.trim().toLowerCase();
-        const crop = row.children[3].textContent.trim();
-        const pest = row.children[4].textContent.trim();
-        let visible = true;
-
-        if (fb && !barangay.includes(fb)) visible = false;
-        if (fc && crop !== fc) visible = false;
-        if (fp && pest !== fp) visible = false;
-
-        row.style.display = visible ? "" : "none";
+    function getFilteredRecords() {
+      const { fb, fc, fp } = getFilters();
+      return records.filter(rec => {
+        if (fb && !(rec.barangay || "").toLowerCase().includes(fb)) return false;
+        if (fc && rec.crop !== fc) return false;
+        if (fp && rec.pest !== fp) return false;
+        return true;
       });
     }
 
-    function updateDashboard() {
-      const rows = document.querySelectorAll("#dataBody tr");
-      const dashBody = document.getElementById("dashboardBody");
-      dashBody.innerHTML = "";
+    // Rebuild markers based on filters
+    function updateMapMarkers() {
+      if (!markersLayer) return;
+      markersLayer.clearLayers();
 
-      const stats = {};
-      crops.forEach(c => stats[c] = { total: 0, high: 0 });
-
-      rows.forEach(row => {
-        if (row.style.display === "none") return;
-        const crop = row.children[3].textContent.trim();
-        const severity = row.children[12].textContent.trim();
-        if (!stats[crop]) return;
-        stats[crop].total += 1;
-        if (severity === "High") stats[crop].high += 1;
-      });
-
-      crops.forEach(crop => {
-        const tr = document.createElement("tr");
-        const tdCrop = document.createElement("td");
-        const tdTotal = document.createElement("td");
-        const tdHigh = document.createElement("td");
-        tdCrop.textContent = crop;
-        tdTotal.textContent = stats[crop].total;
-        tdHigh.textContent = stats[crop].high;
-        tr.appendChild(tdCrop);
-        tr.appendChild(tdTotal);
-        tr.appendChild(tdHigh);
-        dashBody.appendChild(tr);
+      const filtered = getFilteredRecords();
+      filtered.forEach(rec => {
+        if (!rec.lat || !rec.lng) return;
+        addMarker(rec);
       });
     }
 
@@ -1039,24 +921,77 @@
       });
     }
 
-    // Rebuild markers based on filters (barangay, crop, pest)
-    function updateMapMarkers() {
-      if (!markersLayer) return;
-      markersLayer.clearLayers();
+    // CSV utilities
+    function csvEscape(value) {
+      if (value === null || value === undefined) return "";
+      const str = String(value);
+      if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
 
-      const fb = document.getElementById("filterBarangay").value.trim().toLowerCase();
-      const fc = document.getElementById("filterCrop").value;
-      const fp = document.getElementById("filterPest").value;
+    function downloadFilteredCSV() {
+      const filtered = getFilteredRecords();
+      if (filtered.length === 0) {
+        alert("No records match the current filters.");
+        return;
+      }
 
-      records.forEach(rec => {
-        if (!rec.lat || !rec.lng) return;
+      const header = [
+        "Date",
+        "Barangay",
+        "Farmer/Field ID",
+        "Crop",
+        "Pest (Common)",
+        "Scientific Name",
+        "Growth Stage",
+        "Weather",
+        "Sampling Unit",
+        "No. Plants",
+        "Pest Count / Unit",
+        "% Damage",
+        "Severity",
+        "Notes",
+        "Latitude",
+        "Longitude"
+      ];
 
-        if (fb && !rec.barangay.toLowerCase().includes(fb)) return;
-        if (fc && rec.crop !== fc) return;
-        if (fp && rec.pest !== fp) return;
+      const lines = [header.map(csvEscape).join(",")];
 
-        addMarker(rec);
+      filtered.forEach(r => {
+        const row = [
+          r.date || "",
+          r.barangay || "",
+          r.farmerId || "",
+          r.crop || "",
+          r.pest || "",
+          r.sci || "",
+          r.growth || "",
+          r.weather || "",
+          r.unit || "",
+          r.plants || "",
+          r.pestCount || "",
+          r.damage || "",
+          r.severity || "",
+          r.notes || "",
+          r.lat != null ? r.lat : "",
+          r.lng != null ? r.lng : ""
+        ];
+        lines.push(row.map(csvEscape).join(","));
       });
+
+      const csvContent = lines.join("\r\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const today = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = `pest_records_${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
