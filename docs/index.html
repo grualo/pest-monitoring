@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Pest Monitoring – Simple Stable Version</title>
+  <title>Pest Monitoring Tool – Cloud Sync + Map</title>
 
   <!-- Leaflet CSS -->
   <link
@@ -12,39 +12,55 @@
     crossorigin=""
   />
 
+  <!-- Leaflet MarkerCluster CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+  />
+
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 16px;
       background: #f5f5f5;
     }
+
+    h1, h2, h3 {
+      margin-top: 0.5em;
+      margin-bottom: 0.3em;
+    }
+
     .container {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      background: #fff;
+      background: #ffffff;
       padding: 16px 24px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    h1, h2 {
-      margin-top: 0.5em;
-      margin-bottom: 0.3em;
-    }
+
     .flex-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
     }
+
     .field-group {
       display: flex;
       flex-direction: column;
       margin-bottom: 8px;
     }
+
     .field-group label {
       font-size: 0.85rem;
       font-weight: 600;
       margin-bottom: 3px;
     }
+
     .field-group input,
     .field-group select,
     .field-group textarea {
@@ -54,383 +70,1001 @@
       border-radius: 4px;
       min-width: 140px;
     }
-    textarea { resize: vertical; min-height: 50px; }
+
+    textarea {
+      min-height: 50px;
+      resize: vertical;
+    }
+
+    .field-group.small {
+      flex: 1 1 150px;
+    }
+
+    .field-group.medium {
+      flex: 1 1 220px;
+    }
+
+    .field-group.large {
+      flex: 1 1 320px;
+    }
+
     .btn {
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      border-radius: 4px;
+      padding: 8px 16px;
       border: none;
+      border-radius: 4px;
       cursor: pointer;
-      margin-right: 6px;
+      font-size: 0.9rem;
       margin-top: 8px;
     }
-    .btn-primary { background:#1976d2; color:white; }
-    .btn-secondary { background:#e0e0e0; color:#333; }
-    .btn-warning { background:#fbc02d; color:#333; }
+
+    .btn-primary {
+      background-color: #1976d2;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-warning {
+      background-color: #fbc02d;
+      color: #333;
+    }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
+      margin-top: 16px;
       font-size: 0.85rem;
     }
+
     th, td {
       border: 1px solid #ddd;
       padding: 6px 8px;
       text-align: left;
     }
-    thead { background:#eee; }
-    tr:nth-child(even) { background:#fafafa; }
 
-    .severity-low    { background:#c6efce; }
-    .severity-mod    { background:#ffeb9c; }
-    .severity-high   { background:#ffc7ce; }
+    thead {
+      background-color: #eeeeee;
+    }
 
-    #map {
-      width: 100%;
-      height: 350px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+    tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+
+    .severity-low {
+      background-color: #c6efce;
+    }
+
+    .severity-moderate {
+      background-color: #ffeb9c;
+    }
+
+    .severity-high {
+      background-color: #ffc7ce;
+    }
+
+    .section {
+      margin-top: 24px;
+      padding-top: 12px;
+      border-top: 1px solid #ddd;
+    }
+
+    .note {
+      font-size: 0.8rem;
+      font-style: italic;
+      margin-top: 4px;
     }
 
     .status {
       font-size: 0.8rem;
       margin-top: 4px;
     }
-    .status-ok { color:#2e7d32; }
-    .status-err { color:#c62828; }
+
+    .status-ok {
+      color: #2e7d32;
+    }
+
+    .status-error {
+      color: #c62828;
+    }
+
+    .dashboard-table {
+      max-width: 450px;
+    }
+
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    /* Base crop-marker style (mid-level size) */
+    .crop-marker {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #1976d2;
+      background-color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 2px rgba(0,0,0,0.4);
+      font-size: 13px;
+      transition: transform 0.15s ease;
+    }
+
+    .ring-low {
+      border-color: #2e7d32;   /* green */
+    }
+
+    .ring-moderate {
+      border-color: #f9a825;   /* yellow */
+    }
+
+    .ring-high {
+      border-color: #c62828;   /* red */
+    }
+
+    /* Scale-dependent marker sizing via map zoom classes */
+    .zoom-small .crop-marker {
+      transform: scale(0.7);
+    }
+
+    .zoom-medium .crop-marker {
+      transform: scale(0.9);
+    }
+
+    .zoom-large .crop-marker {
+      transform: scale(1.15);
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <h1>Pest Monitoring – Simple Cloud Version</h1>
-  <p style="font-size:0.8rem;">
-    Severity rule: <b>Low</b> &lt;10% | <b>Moderate</b> 10–30% | <b>High</b> &gt;30%.<br>
-    This version is simplified so that <b>Add Record always works</b> even if some fields are blank.
-  </p>
+  <div class="container">
+    <h1>Pest Monitoring Tool – Cloud Sync + Map</h1>
+    <p class="note">
+      Severity rule: <strong>Low</strong> &lt; 10% &nbsp;&nbsp;|&nbsp;&nbsp;
+      <strong>Moderate</strong> 10–30% &nbsp;&nbsp;|&nbsp;&nbsp;
+      <strong>High</strong> &gt; 30%
+    </p>
 
-  <!-- FORM -->
-  <h2>Farmer Field Form</h2>
-  <form id="pestForm">
-    <div class="flex-row">
-      <div class="field-group">
-        <label for="date">Date</label>
-        <input type="date" id="date">
-      </div>
-      <div class="field-group">
-        <label for="barangay">Barangay</label>
-        <input type="text" id="barangay" placeholder="e.g. San Juan">
-      </div>
-      <div class="field-group">
-        <label for="farmerId">Farmer / Field ID</label>
-        <input type="text" id="farmerId" placeholder="e.g. F-01">
-      </div>
+    <!-- Farmer Field Form -->
+    <div class="section">
+      <h2>Farmer Field Form (Input)</h2>
+      <form id="pestForm" onsubmit="event.preventDefault(); addRecord();">
+        <div class="flex-row">
+          <div class="field-group small">
+            <label for="date">Date</label>
+            <input type="date" id="date" />
+          </div>
 
-      <div class="field-group">
-        <label for="crop">Crop</label>
-        <select id="crop">
-          <option value="">-- select --</option>
-          <option>Rice</option>
-          <option>Corn</option>
-          <option>Cassava</option>
-          <option>Tomato</option>
-          <option>Eggplant</option>
-          <option>Okra</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="pest">Pest (common name)</label>
-        <select id="pest">
-          <option value="">-- select --</option>
-          <option>Rice stem borer</option>
-          <option>Brown planthopper</option>
-          <option>Whitefly</option>
-          <option>Aphids</option>
-          <option>Tomato fruitworm</option>
-          <option>Eggplant fruit and shoot borer</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label for="damage">Percent damage (%)</label>
-        <input type="number" id="damage" min="0" max="100" step="0.1">
-      </div>
+          <div class="field-group medium">
+            <label for="barangay">Barangay</label>
+            <input type="text" id="barangay" placeholder="e.g. San Juan" />
+          </div>
 
-      <div class="field-group">
-        <label for="lat">Latitude</label>
-        <input type="number" id="lat" step="0.000001" placeholder="optional">
-      </div>
-      <div class="field-group">
-        <label for="lng">Longitude</label>
-        <input type="number" id="lng" step="0.000001" placeholder="optional">
-      </div>
-      <div class="field-group">
-        <label>&nbsp;</label>
-        <button type="button" class="btn btn-secondary" id="locBtn">📍 Use my location</button>
-      </div>
+          <div class="field-group medium">
+            <label for="farmerId">Farmer / Field ID</label>
+            <input type="text" id="farmerId" placeholder="e.g. F-001" />
+          </div>
 
-      <div class="field-group" style="flex:1 1 250px;">
-        <label for="notes">Notes / Recommendation</label>
-        <textarea id="notes" placeholder="Short notes…"></textarea>
-      </div>
+          <div class="field-group medium">
+            <label for="crop">Crop</label>
+            <select id="crop" onchange="updatePestOptions()">
+              <option value="">-- Select crop --</option>
+              <option value="Rice">Rice</option>
+              <option value="Corn">Corn</option>
+              <option value="Cassava">Cassava</option>
+              <option value="Tomato">Tomato</option>
+              <option value="Eggplant">Eggplant</option>
+              <option value="Okra">Okra</option>
+            </select>
+          </div>
+
+          <div class="field-group medium">
+            <label for="pest">Pest (Common Name)</label>
+            <select id="pest" onchange="updateScientificName()">
+              <option value="">-- Select pest --</option>
+            </select>
+          </div>
+
+          <div class="field-group large">
+            <label for="scientificName">Scientific Name</label>
+            <input type="text" id="scientificName" readonly />
+          </div>
+
+          <div class="field-group medium">
+            <label for="growthStage">Growth Stage</label>
+            <select id="growthStage">
+              <option value="">-- Select stage --</option>
+              <option value="Seedling">Seedling</option>
+              <option value="Vegetative">Vegetative</option>
+              <option value="Reproductive">Reproductive</option>
+              <option value="Maturation">Maturation</option>
+            </select>
+          </div>
+
+          <div class="field-group medium">
+            <label for="weather">Weather Condition</label>
+            <select id="weather">
+              <option value="">-- Select weather --</option>
+              <option value="Sunny">Sunny</option>
+              <option value="Cloudy">Cloudy</option>
+              <option value="Rainy">Rainy</option>
+              <option value="Windy">Windy</option>
+            </select>
+          </div>
+
+          <!-- Smart Sampling Unit -->
+          <div class="field-group medium">
+            <label for="samplingUnit">Sampling Unit</label>
+            <select id="samplingUnit"></select>
+            <div id="samplingHint" class="note"></div>
+          </div>
+
+          <div class="field-group small">
+            <label for="plantsSampled">No. of Plants Sampled</label>
+            <input type="number" id="plantsSampled" min="0" />
+          </div>
+
+          <div class="field-group small">
+            <label for="pestCount">Pest Count per Unit</label>
+            <input type="number" id="pestCount" min="0" step="0.1" />
+          </div>
+
+          <div class="field-group small">
+            <label for="damage">Percent Damage (%)</label>
+            <input type="number" id="damage" min="0" max="100" step="0.1"
+                   oninput="updateSeverityPreview()" />
+          </div>
+
+          <div class="field-group medium">
+            <label>Severity (auto)</label>
+            <input type="text" id="severityPreview" readonly />
+          </div>
+
+          <!-- Coordinates + use my location -->
+          <div class="field-group small">
+            <label for="lat">Latitude</label>
+            <input type="number" id="lat" step="0.000001" placeholder="e.g. 16.332" />
+          </div>
+
+          <div class="field-group small">
+            <label for="lng">Longitude</label>
+            <input type="number" id="lng" step="0.000001" placeholder="e.g. 120.350" />
+          </div>
+
+          <div class="field-group medium">
+            <label>&nbsp;</label>
+            <button type="button" class="btn btn-secondary" onclick="useMyLocation()">
+              📍 Use my location
+            </button>
+          </div>
+
+          <div class="field-group large">
+            <label for="notes">Notes / Recommendation</label>
+            <textarea id="notes" placeholder="e.g. Apply biological control, monitor next 3 days."></textarea>
+          </div>
+        </div>
+
+        <div class="flex-row">
+          <button type="submit" class="btn btn-primary">➕ Add Record</button>
+          <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear Form</button>
+          <button type="button" class="btn btn-warning" onclick="loadFromSheet()">⬇ Load from Google Sheet</button>
+        </div>
+        <div id="syncStatus" class="status"></div>
+      </form>
     </div>
 
-    <div>
-      <button type="button" class="btn btn-primary" id="addBtn">➕ Add Record</button>
-      <button type="button" class="btn btn-secondary" id="clearBtn">Clear Form</button>
-      <button type="button" class="btn btn-warning" id="loadBtn">⬇ Load from Google Sheet</button>
+    <!-- Map -->
+    <div class="section">
+      <h2>Map of Pest Records</h2>
+      <p class="note">
+        Markers: crop emoji + colored ring (green = Low, yellow = Moderate, red = High).  
+        Map respects filters below; markers cluster when many overlap. Icons scale slightly with zoom.
+      </p>
+      <div id="map"></div>
     </div>
-    <div id="syncStatus" class="status"></div>
-  </form>
 
-  <!-- MAP -->
-  <h2>Map of Pest Records</h2>
-  <div id="map"></div>
+    <!-- Filters + Data Table -->
+    <div class="section">
+      <h2>Encoded Records</h2>
+      <div class="flex-row">
+        <div class="field-group medium">
+          <label for="filterBarangay">Filter by Barangay (dashboard + table + map)</label>
+          <input type="text" id="filterBarangay" placeholder="e.g. San Juan"
+                 oninput="filterTable(); updateDashboard(); updateMapMarkers();" />
+        </div>
 
-  <!-- TABLE -->
-  <h2>Encoded Records</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Barangay</th>
-        <th>Farmer</th>
-        <th>Crop</th>
-        <th>Pest</th>
-        <th>% Damage</th>
-        <th>Severity</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody id="dataBody"></tbody>
-  </table>
-</div>
+        <div class="field-group medium">
+          <label for="filterCrop">Filter by Crop (table + map)</label>
+          <select id="filterCrop" onchange="filterTable(); updateDashboard(); updateMapMarkers();">
+            <option value="">All crops</option>
+            <option value="Rice">Rice</option>
+            <option value="Corn">Corn</option>
+            <option value="Cassava">Cassava</option>
+            <option value="Tomato">Tomato</option>
+            <option value="Eggplant">Eggplant</option>
+            <option value="Okra">Okra</option>
+          </select>
+        </div>
 
-<!-- Leaflet JS -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""
-></script>
+        <div class="field-group medium">
+          <label for="filterPest">Filter by Pest (table + map)</label>
+          <select id="filterPest" onchange="filterTable(); updateDashboard(); updateMapMarkers();">
+            <option value="">All pests</option>
+            <!-- options populated by JS -->
+          </select>
+        </div>
+      </div>
 
-<script>
-  // ===== CONFIG =====
-  const SHEET_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxkrvX8wVXZJf-zo3qyzjBxYEzXxuEsZHAqXi8GJ-6RbyluQdTKE8P62aLa7FSxomKD/exec"; // <-- replace this
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Barangay</th>
+            <th>Farmer / Field ID</th>
+            <th>Crop</th>
+            <th>Pest (Common)</th>
+            <th>Scientific Name</th>
+            <th>Growth Stage</th>
+            <th>Weather</th>
+            <th>Sampling Unit</th>
+            <th>No. Plants</th>
+            <th>Pest Count / Unit</th>
+            <th>% Damage</th>
+            <th>Severity</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
 
-  // ===== STATE =====
-  const records = [];
-  let map, markersLayer;
+    <!-- Dashboard -->
+    <div class="section">
+      <h2>Barangay-Level Summary Dashboard</h2>
+      <p class="note">
+        Dashboard is based on current (visible) records in the table with filters applied.
+      </p>
+      <table class="dashboard-table">
+        <thead>
+          <tr>
+            <th>Crop</th>
+            <th>Total Records</th>
+            <th>High Severity Alerts</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardBody"></tbody>
+      </table>
+    </div>
+  </div>
 
-  function computeSeverity(dmg) {
-    if (dmg == null || isNaN(dmg)) return "";
-    const v = Number(dmg);
-    if (v < 10) return "Low";
-    if (v < 30) return "Moderate";
-    return "High";
-  }
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
 
-  function autoFillDate() {
-    const d = document.getElementById("date");
-    if (!d.value) {
-      d.value = new Date().toISOString().slice(0,10);
-    }
-  }
+  <!-- Leaflet MarkerCluster JS -->
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-  function initMap() {
-    map = L.map('map').setView([12.5, 122], 5);  // Philippines view
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; OpenStreetMap'
-    }).addTo(map);
-    markersLayer = L.layerGroup().addTo(map);
-  }
+  <script>
+    // >>>> YOUR WEB APP URL (already set from your code) <<<<
+    const SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwL275ZF10RP-DUySTsZErI4tZdlAwczFRTte1kz_cHYYZvt1V7GT6evTGhx2BRBeIL/exec';
 
-  function clearForm() {
-    document.getElementById("pestForm").reset();
-    autoFillDate();
-    const status = document.getElementById("syncStatus");
-    status.textContent = "";
-    status.className = "status";
-  }
-
-  function severityClass(sev) {
-    if (sev === "Low") return "severity-low";
-    if (sev === "Moderate") return "severity-mod";
-    if (sev === "High") return "severity-high";
-    return "";
-  }
-
-  function addRowToTable(rec) {
-    const tb = document.getElementById("dataBody");
-    const tr = document.createElement("tr");
-    const cells = [
-      rec.date || "",
-      rec.barangay || "",
-      rec.farmerId || "",
-      rec.crop || "",
-      rec.pest || "",
-      rec.damage != null ? rec.damage : "",
-      rec.severity || "",
-      rec.notes || ""
-    ];
-    cells.forEach((v, i) => {
-      const td = document.createElement("td");
-      td.textContent = v;
-      if (i === 6) td.className = severityClass(rec.severity);
-      tr.appendChild(td);
-    });
-    tb.appendChild(tr);
-  }
-
-  function addMarker(rec) {
-    if (!rec.lat || !rec.lng || isNaN(rec.lat) || isNaN(rec.lng)) return;
-    const marker = L.marker([rec.lat, rec.lng]);
-    marker.bindPopup(
-      `<b>${rec.crop || "Unknown crop"}</b><br>` +
-      `${rec.pest || ""}<br>` +
-      `Damage: ${rec.damage || 0}% (${rec.severity || "-"})<br>` +
-      `Barangay: ${rec.barangay || "-"}`
-    );
-    markersLayer.addLayer(marker);
-  }
-
-  function sendToGoogleSheet(rec) {
-    if (!SHEET_WEBAPP_URL || SHEET_WEBAPP_URL.includes("YOUR_WEB_APP_URL_HERE")) {
-      console.warn("SHEET_WEBAPP_URL not set – skipping POST");
-      return;
-    }
-    fetch(SHEET_WEBAPP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rec)
-    }).catch(err => {
-      console.error("POST error:", err);
-    });
-  }
-
-  function addRecord() {
-    const data = {
-      date: document.getElementById("date").value,
-      barangay: document.getElementById("barangay").value.trim(),
-      farmerId: document.getElementById("farmerId").value.trim(),
-      crop: document.getElementById("crop").value,
-      pest: document.getElementById("pest").value,
-      damage: document.getElementById("damage").value,
-      notes: document.getElementById("notes").value.trim(),
-      lat: parseFloat(document.getElementById("lat").value),
-      lng: parseFloat(document.getElementById("lng").value)
+    const pestMap = {
+      "Rice": [
+        { common: "Rice stem borer", sci: "Scirpophaga incertulas" },
+        { common: "Brown planthopper", sci: "Nilaparvata lugens" },
+        { common: "Green leafhopper", sci: "Nephotettix virescens" },
+        { common: "Rice bug", sci: "Leptocorisa oratorius" },
+        { common: "Rice black bug", sci: "Scotinophara coarctata" },
+        { common: "Armyworm", sci: "Mythimna separata" },
+        { common: "Leaf folder", sci: "Cnaphalocrocis medinalis" }
+      ],
+      "Corn": [
+        { common: "Corn borer", sci: "Ostrinia furnacalis" },
+        { common: "Fall armyworm", sci: "Spodoptera frugiperda" },
+        { common: "Corn earworm", sci: "Helicoverpa armigera" },
+        { common: "Aphids", sci: "Rhopalosiphum maidis" },
+        { common: "Cutworms", sci: "Agrotis ipsilon" }
+      ],
+      "Cassava": [
+        { common: "Cassava mealybug", sci: "Phenacoccus manihoti" },
+        { common: "Cassava green mite", sci: "Mononychellus tanajoa" },
+        { common: "Whitefly", sci: "Bemisia tabaci" },
+        { common: "Spiraling whitefly", sci: "Aleurodicus dispersus" },
+        { common: "Scale insects", sci: "Paracoccus marginatus" }
+      ],
+      "Tomato": [
+        { common: "Tomato fruitworm", sci: "Helicoverpa armigera" },
+        { common: "Whitefly", sci: "Bemisia tabaci" },
+        { common: "Aphids", sci: "Aphis gossypii" },
+        { common: "Thrips", sci: "Thrips tabaci" },
+        { common: "Leafminers", sci: "Liriomyza trifolii" },
+        { common: "Cutworms", sci: "Agrotis ipsilon" }
+      ],
+      "Eggplant": [
+        { common: "Eggplant fruit and shoot borer", sci: "Leucinodes orbonalis" },
+        { common: "Aphids", sci: "Aphis gossypii" },
+        { common: "Thrips", sci: "Thrips palmi" },
+        { common: "Whiteflies", sci: "Bemisia tabaci" },
+        { common: "Mites", sci: "Tetranychus urticae" }
+      ],
+      "Okra": [
+        { common: "Aphids", sci: "Aphis gossypii" },
+        { common: "Whiteflies", sci: "Bemisia tabaci" },
+        { common: "Fruit borers", sci: "Helicoverpa armigera" },
+        { common: "Leafhoppers", sci: "Amrasca biguttula" },
+        { common: "Mites", sci: "Tetranychus urticae" }
+      ]
     };
 
-    // Make damage optional
-    if (data.damage === "" || isNaN(data.damage)) {
-      data.damage = null;
-    } else {
-      data.damage = Number(data.damage);
-    }
-    data.severity = computeSeverity(data.damage);
+    // Default sampling units per crop (before pest is chosen)
+    const cropDefaultUnits = {
+      "Rice": ["Hill", "Tiller", "Leaf", "Panicle"],
+      "Corn": ["Plant", "Row-meter", "Whorl", "Ear"],
+      "Cassava": ["Plant", "Leaf", "Shoot"],
+      "Tomato": ["Plant", "Leaf", "Fruit"],
+      "Eggplant": ["Plant", "Shoot", "Fruit"],
+      "Okra": ["Plant", "Leaf", "Fruit"],
+      "_default": ["Hill", "Plant", "Leaf", "Panicle/Fruit", "Row-meter"]
+    };
 
-    if (isNaN(data.lat)) data.lat = null;
-    if (isNaN(data.lng)) data.lng = null;
+    // Suggested sampling units based on pest "type"
+    const pestSamplingUnits = {
+      // RICE
+      "Rice stem borer": ["Hill", "Tiller", "Plant"],
+      "Brown planthopper": ["Hill", "Plant", "Stem base"],
+      "Green leafhopper": ["Hill", "Plant", "Leaf"],
+      "Rice bug": ["Hill", "Panicle", "Plant"],
+      "Rice black bug": ["Hill", "Plant"],
+      "Armyworm": ["Plant", "Row-meter"],
+      "Leaf folder": ["Leaf", "Plant"],
 
-    records.push(data);
-    addRowToTable(data);
-    addMarker(data);
-    sendToGoogleSheet(data);
+      // CORN
+      "Corn borer": ["Plant", "Stem", "Ear"],
+      "Fall armyworm": ["Plant", "Whorl", "Row-meter"],
+      "Corn earworm": ["Ear", "Plant"],
+      "Aphids": ["Leaf", "Plant"],
+      "Cutworms": ["Plant", "Hill", "Row-meter"],
 
-    const status = document.getElementById("syncStatus");
-    status.textContent = "Record added locally (saving to Google Sheet if URL is set)…";
-    status.className = "status status-ok";
+      // CASSAVA
+      "Cassava mealybug": ["Leaf", "Shoot", "Plant"],
+      "Cassava green mite": ["Leaf", "Plant"],
+      "Whitefly": ["Leaf", "Plant"],
+      "Spiraling whitefly": ["Leaf", "Plant"],
+      "Scale insects": ["Leaf", "Stem", "Plant"],
 
-    clearForm();
-  }
+      // TOMATO
+      "Tomato fruitworm": ["Fruit", "Plant"],
+      "Thrips": ["Leaf", "Flower", "Plant"],
+      "Leafminers": ["Leaf", "Plant"],
 
-  function loadFromSheet() {
-    const status = document.getElementById("syncStatus");
-    status.textContent = "Loading from Google Sheet…";
-    status.className = "status";
+      // EGGPLANT
+      "Eggplant fruit and shoot borer": ["Shoot", "Fruit", "Plant"],
 
-    if (!SHEET_WEBAPP_URL || SHEET_WEBAPP_URL.includes("YOUR_WEB_APP_URL_HERE")) {
-      status.textContent = "No SHEET_WEBAPP_URL configured.";
-      status.className = "status status-err";
-      return;
-    }
+      // OKRA
+      "Fruit borers": ["Fruit", "Plant"],
+      "Leafhoppers": ["Leaf", "Plant"],
 
-    fetch(SHEET_WEBAPP_URL)
-      .then(r => r.json())
-      .then(rows => {
-        // clear current
-        records.length = 0;
-        document.getElementById("dataBody").innerHTML = "";
-        markersLayer.clearLayers();
+      // general fallback
+      "_default": ["Hill", "Plant", "Leaf", "Panicle/Fruit", "Row-meter"]
+    };
 
-        rows.forEach(r => {
-          const rec = {
-            date: r.date || "",
-            barangay: r.barangay || "",
-            farmerId: r.farmerId || "",
-            crop: r.crop || "",
-            pest: r.pest || "",
-            damage: r.damage !== "" ? Number(r.damage) : null,
-            severity: r.severity || computeSeverity(r.damage),
-            notes: r.notes || "",
-            lat: r.lat ? Number(r.lat) : null,
-            lng: r.lng ? Number(r.lng) : null
-          };
-          records.push(rec);
-          addRowToTable(rec);
-          addMarker(rec);
-        });
+    const crops = ["Rice", "Corn", "Cassava", "Tomato", "Eggplant", "Okra"];
+    const records = [];
+    let map, markersLayer;
 
-        status.textContent = "Loaded from Google Sheet ✔";
-        status.className = "status status-ok";
-      })
-      .catch(err => {
-        console.error("GET error:", err);
-        status.textContent = "Error loading from Google Sheet.";
-        status.className = "status status-err";
+    function initMap() {
+      map = L.map('map', {
+        minZoom: 5,
+        maxZoom: 18,
+        zoomControl: true
+      }).setView([12.5, 122], 5); // center of PH
+
+      // Base layers
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '&copy; Esri'
       });
-  }
 
-  function useMyLocation() {
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported.");
-      return;
+      const terrain = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17,
+        attribution: '&copy; OpenTopoMap'
+      });
+
+      const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '&copy; CartoDB'
+      });
+
+      const baseLayers = {
+        "OpenStreetMap": osm,
+        "Satellite (Esri)": esriSat,
+        "Terrain (OpenTopoMap)": terrain,
+        "Dark Mode (Carto)": dark
+      };
+
+      // Marker cluster group
+      markersLayer = L.markerClusterGroup();
+      map.addLayer(markersLayer);
+
+      L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+
+      // Set initial zoom scale class
+      updateZoomScaleClass();
+      map.on('zoomend', updateZoomScaleClass);
     }
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        const { latitude, longitude } = pos.coords;
-        document.getElementById("lat").value = latitude.toFixed(6);
-        document.getElementById("lng").value = longitude.toFixed(6);
-        if (map) map.setView([latitude, longitude], 16);
-      },
-      err => {
-        console.error(err);
-        alert("Unable to get location.");
-      }
-    );
-  }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    autoFillDate();
-    initMap();
-    document.getElementById("addBtn").addEventListener("click", e => {
-      e.preventDefault();
-      addRecord();
-    });
-    document.getElementById("clearBtn").addEventListener("click", e => {
-      e.preventDefault();
+    // Add/remove zoom-dependent classes on map container
+    function updateZoomScaleClass() {
+      if (!map) return;
+      const z = map.getZoom();
+      const container = map.getContainer();
+      container.classList.remove('zoom-small', 'zoom-medium', 'zoom-large');
+
+      if (z <= 6) {
+        container.classList.add('zoom-small');
+      } else if (z <= 10) {
+        container.classList.add('zoom-medium');
+      } else {
+        container.classList.add('zoom-large');
+      }
+    }
+
+    function autoFillDate() {
+      const dateInput = document.getElementById("date");
+      if (!dateInput) return;
+      const today = new Date().toISOString().slice(0, 10);
+      dateInput.value = today;
+    }
+
+    function useMyLocation() {
+      const latInput = document.getElementById("lat");
+      const lngInput = document.getElementById("lng");
+
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by this browser.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          latInput.value = latitude.toFixed(6);
+          lngInput.value = longitude.toFixed(6);
+          if (typeof map !== "undefined") {
+            map.setView([latitude, longitude], 15);
+          }
+        },
+        (err) => {
+          console.error(err);
+          alert("Unable to get location. Please check permissions.");
+        }
+      );
+    }
+
+    function updatePestOptions() {
+      const crop = document.getElementById("crop").value;
+      const pestSelect = document.getElementById("pest");
+      const sciInput = document.getElementById("scientificName");
+      pestSelect.innerHTML = '<option value="">-- Select pest --</option>';
+      sciInput.value = "";
+
+      // set default sampling units for this crop
+      updateSamplingUnits(crop, "");
+
+      if (!crop || !pestMap[crop]) return;
+      pestMap[crop].forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.common;
+        opt.textContent = p.common;
+        pestSelect.appendChild(opt);
+      });
+    }
+
+    function updateScientificName() {
+      const crop = document.getElementById("crop").value;
+      const pest = document.getElementById("pest").value;
+      const sciInput = document.getElementById("scientificName");
+      sciInput.value = "";
+      if (!crop || !pest || !pestMap[crop]) {
+        updateSamplingUnits(crop, "");
+        return;
+      }
+      const match = pestMap[crop].find(p => p.common === pest);
+      if (match) sciInput.value = match.sci;
+
+      // update sampling units based on pest
+      updateSamplingUnits(crop, pest);
+    }
+
+    function computeSeverity(damage) {
+      if (damage === "" || isNaN(damage)) return "";
+      const val = parseFloat(damage);
+      if (val < 10) return "Low";
+      if (val < 30) return "Moderate";
+      return "High";
+    }
+
+    function updateSeverityPreview() {
+      const damage = document.getElementById("damage").value;
+      const severity = computeSeverity(damage);
+      document.getElementById("severityPreview").value = severity;
+    }
+
+    function clearForm() {
+      document.getElementById("pestForm").reset();
+      document.getElementById("scientificName").value = "";
+      document.getElementById("severityPreview").value = "";
+      document.getElementById("pest").innerHTML = '<option value="">-- Select pest --</option>';
+      autoFillDate();
+      updateSamplingUnits("", "");  // reset sampling unit to general default
+      const status = document.getElementById("syncStatus");
+      if (status) {
+        status.textContent = "";
+        status.className = "status";
+      }
+    }
+
+    // Smart sampling unit updater
+    function updateSamplingUnits(crop, pestName) {
+      const su = document.getElementById("samplingUnit");
+      const hint = document.getElementById("samplingHint");
+      su.innerHTML = "";
+
+      let units;
+      let label;
+
+      if (pestName && pestSamplingUnits[pestName]) {
+        units = pestSamplingUnits[pestName];
+        label = `Suggested units for this pest type (${pestName}): `;
+      } else if (crop && cropDefaultUnits[crop]) {
+        units = cropDefaultUnits[crop];
+        label = `Suggested units for this crop (${crop}) pests: `;
+      } else {
+        units = pestSamplingUnits["_default"];
+        label = "Suggested general units: ";
+      }
+
+      units.forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u;
+        opt.textContent = u;
+        su.appendChild(opt);
+      });
+
+      if (hint) {
+        hint.textContent = label + units.join(", ");
+      }
+    }
+
+    // Crop → emoji mapping
+    function getCropEmoji(crop) {
+      switch (crop) {
+        case "Rice": return "🌾";
+        case "Corn": return "🌽";
+        case "Cassava": return "🥔";  // root stand-in
+        case "Tomato": return "🍅";
+        case "Eggplant": return "🍆";
+        case "Okra": return "🥒";    // okra-like pod
+        default: return "🌱";
+      }
+    }
+
+    function getSeverityRingClass(severity) {
+      if (severity === "Low") return "ring-low";
+      if (severity === "Moderate") return "ring-moderate";
+      if (severity === "High") return "ring-high";
+      return "";
+    }
+
+    function makeCropIcon(crop, severity) {
+      const emoji = getCropEmoji(crop);
+      const ringClass = getSeverityRingClass(severity);
+      const html = `<div class="crop-marker ${ringClass}">${emoji}</div>`;
+      return L.divIcon({
+        html: html,
+        className: "",
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+    }
+
+    function addMarker(record) {
+      if (!record.lat || !record.lng) return;
+      const icon = makeCropIcon(record.crop, record.severity);
+      const marker = L.marker([record.lat, record.lng], { icon });
+      const popupContent = `
+        <strong>${record.crop}</strong> – ${record.pest}<br/>
+        <em>${record.sci}</em><br/>
+        Barangay: ${record.barangay || "-"}<br/>
+        Damage: ${record.damage || 0}% (${record.severity})<br/>
+        Weather: ${record.weather || "-"}<br/>
+        Date: ${record.date || "-"}
+      `;
+      marker.bindPopup(popupContent);
+      markersLayer.addLayer(marker);
+    }
+
+    // Helper: create table row
+    function addRowToTable(data) {
+      const tbody = document.getElementById("dataBody");
+      const tr = document.createElement("tr");
+      const cells = [
+        data.date,
+        data.barangay,
+        data.farmerId,
+        data.crop,
+        data.pest,
+        data.sci,
+        data.growth,
+        data.weather,
+        data.unit,
+        data.plants,
+        data.pestCount,
+        data.damage,
+        data.severity,
+        data.notes
+      ];
+
+      cells.forEach((val, idx) => {
+        const td = document.createElement("td");
+        td.textContent = val;
+        if (idx === 12) {
+          if (data.severity === "Low") td.classList.add("severity-low");
+          if (data.severity === "Moderate") td.classList.add("severity-moderate");
+          if (data.severity === "High") td.classList.add("severity-high");
+        }
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    }
+
+    // === NEW: Option 1 — actually send to your Google Sheet ===
+    function sendToGoogleSheet(data) {
+      const status = document.getElementById("syncStatus");
+      if (!SHEET_WEBAPP_URL) {
+        console.warn("SHEET_WEBAPP_URL is empty – skipping POST");
+        if (status) {
+          status.textContent = "Saved locally only (no Web App URL set).";
+          status.className = "status status-error";
+        }
+        return;
+      }
+
+      // Fire-and-forget POST; even if it fails, local add still works
+      fetch(SHEET_WEBAPP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      }).then(() => {
+        if (status) {
+          status.textContent = "Record added and sent to Google Sheet (no-cors).";
+          status.className = "status status-ok";
+        }
+      }).catch(err => {
+        console.error("Error sending to Google Sheet:", err);
+        if (status) {
+          status.textContent = "Record added locally, but failed to send to Google Sheet.";
+          status.className = "status status-error";
+        }
+      });
+    }
+
+    function addRecord() {
+      const data = {
+        date: document.getElementById("date").value,
+        barangay: document.getElementById("barangay").value.trim(),
+        farmerId: document.getElementById("farmerId").value.trim(),
+        crop: document.getElementById("crop").value,
+        pest: document.getElementById("pest").value,
+        sci: document.getElementById("scientificName").value,
+        growth: document.getElementById("growthStage").value,
+        weather: document.getElementById("weather").value,
+        unit: document.getElementById("samplingUnit").value,
+        plants: document.getElementById("plantsSampled").value,
+        pestCount: document.getElementById("pestCount").value,
+        damage: document.getElementById("damage").value,
+        notes: document.getElementById("notes").value.trim(),
+        lat: parseFloat(document.getElementById("lat").value),
+        lng: parseFloat(document.getElementById("lng").value)
+      };
+
+      // keep your original required fields
+      if (!data.crop || !data.pest || data.damage === "") {
+        alert("Please fill at least Crop, Pest, and % Damage.");
+        return;
+      }
+
+      data.severity = computeSeverity(data.damage);
+      records.push(data);
+
+      // send to Google Sheet (async)
+      sendToGoogleSheet(data);
+
+      // update UI
+      addRowToTable(data);
       clearForm();
+      updateDashboard();
+      filterTable();
+      updateMapMarkers();
+    }
+
+    // Clear all records in UI (not in sheet)
+    function clearAllRecordsUI() {
+      records.length = 0;
+      document.getElementById("dataBody").innerHTML = "";
+      if (markersLayer) markersLayer.clearLayers();
+    }
+
+    // Load from Google Sheet → rebuild records, table, map
+    function loadFromSheet() {
+      const status = document.getElementById("syncStatus");
+      if (status) {
+        status.textContent = "Loading from Google Sheet…";
+        status.className = "status";
+      }
+
+      fetch(SHEET_WEBAPP_URL)
+        .then(res => res.json())
+        .then(rows => {
+          clearAllRecordsUI();
+          rows.forEach(r => {
+            const rec = {
+              date: r.date || "",
+              barangay: r.barangay || "",
+              farmerId: r.farmerId || "",
+              crop: r.crop || "",
+              pest: r.pest || "",
+              sci: r.sci || "",
+              growth: r.growth || "",
+              weather: r.weather || "",
+              unit: r.unit || "",
+              plants: r.plants || "",
+              pestCount: r.pestCount || "",
+              damage: r.damage || "",
+              severity: r.severity || "",
+              notes: r.notes || "",
+              lat: r.lat !== "" && r.lat !== null ? parseFloat(r.lat) : null,
+              lng: r.lng !== "" && r.lng !== null ? parseFloat(r.lng) : null
+            };
+            records.push(rec);
+            addRowToTable(rec);
+          });
+
+          updateDashboard();
+          filterTable();
+          updateMapMarkers();
+
+          if (status) {
+            status.textContent = "Loaded from Google Sheet ✔";
+            status.className = "status status-ok";
+          }
+        })
+        .catch(err => {
+          console.error("Error loading from Google Sheet:", err);
+          if (status) {
+            status.textContent = "Error loading from Google Sheet";
+            status.className = "status status-error";
+          }
+        });
+    }
+
+    function filterTable() {
+      const fb = document.getElementById("filterBarangay").value.trim().toLowerCase();
+      const fc = document.getElementById("filterCrop").value;
+      const fp = document.getElementById("filterPest").value;
+      const rows = document.querySelectorAll("#dataBody tr");
+
+      rows.forEach(row => {
+        const barangay = row.children[1].textContent.trim().toLowerCase();
+        const crop = row.children[3].textContent.trim();
+        const pest = row.children[4].textContent.trim();
+        let visible = true;
+
+        if (fb && !barangay.includes(fb)) visible = false;
+        if (fc && crop !== fc) visible = false;
+        if (fp && pest !== fp) visible = false;
+
+        row.style.display = visible ? "" : "none";
+      });
+    }
+
+    function updateDashboard() {
+      const rows = document.querySelectorAll("#dataBody tr");
+      const dashBody = document.getElementById("dashboardBody");
+      dashBody.innerHTML = "";
+
+      const stats = {};
+      crops.forEach(c => stats[c] = { total: 0, high: 0 });
+
+      rows.forEach(row => {
+        if (row.style.display === "none") return;
+        const crop = row.children[3].textContent.trim();
+        const severity = row.children[12].textContent.trim();
+        if (!stats[crop]) return;
+        stats[crop].total += 1;
+        if (severity === "High") stats[crop].high += 1;
+      });
+
+      crops.forEach(crop => {
+        const tr = document.createElement("tr");
+        const tdCrop = document.createElement("td");
+        const tdTotal = document.createElement("td");
+        const tdHigh = document.createElement("td");
+        tdCrop.textContent = crop;
+        tdTotal.textContent = stats[crop].total;
+        tdHigh.textContent = stats[crop].high;
+        tr.appendChild(tdCrop);
+        tr.appendChild(tdTotal);
+        tr.appendChild(tdHigh);
+        dashBody.appendChild(tr);
+      });
+    }
+
+    // Build pest filter dropdown (union of all pests)
+    function populatePestFilter() {
+      const filterPest = document.getElementById("filterPest");
+      if (!filterPest) return;
+      const pestSet = new Set();
+
+      Object.keys(pestMap).forEach(crop => {
+        pestMap[crop].forEach(p => pestSet.add(p.common));
+      });
+
+      const allPests = Array.from(pestSet).sort();
+      filterPest.innerHTML = '<option value="">All pests</option>';
+      allPests.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        filterPest.appendChild(opt);
+      });
+    }
+
+    // Rebuild markers based on filters (barangay, crop, pest)
+    function updateMapMarkers() {
+      if (!markersLayer) return;
+      markersLayer.clearLayers();
+
+      const fb = document.getElementById("filterBarangay").value.trim().toLowerCase();
+      const fc = document.getElementById("filterCrop").value;
+      const fp = document.getElementById("filterPest").value;
+
+      records.forEach(rec => {
+        if (!rec.lat || !rec.lng) return;
+
+        if (fb && !rec.barangay.toLowerCase().includes(fb)) return;
+        if (fc && rec.crop !== fc) return;
+        if (fp && rec.pest !== fp) return;
+
+        addMarker(rec);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      autoFillDate();
+      populatePestFilter();
+      updateSamplingUnits("", ""); // general default on load
     });
-    document.getElementById("loadBtn").addEventListener("click", e => {
-      e.preventDefault();
-      loadFromSheet();
-    });
-    document.getElementById("locBtn").addEventListener("click", e => {
-      e.preventDefault();
-      useMyLocation();
-    });
-  });
-</script>
+  </script>
 </body>
 </html>
