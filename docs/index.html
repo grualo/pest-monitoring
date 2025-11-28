@@ -790,7 +790,19 @@
       });
     }
 
+    // ⭐ NEW: ensure coordinates exist, then immediately show new marker
     function addRecord() {
+      const latVal = document.getElementById("lat").value;
+      const lngVal = document.getElementById("lng").value;
+      const lat = parseFloat(latVal);
+      const lng = parseFloat(lngVal);
+
+      // Require coordinates so the marker appears on the map
+      if (isNaN(lat) || isNaN(lng)) {
+        alert("Please tap 'Use my location' before adding a record so it can appear on the map.");
+        return;
+      }
+
       const data = {
         date:       document.getElementById("date").value,
         barangay:   document.getElementById("barangay").value.trim(),
@@ -805,8 +817,8 @@
         pestCount:  document.getElementById("pestCount").value,
         damage:     document.getElementById("damage").value,
         notes:      document.getElementById("notes").value.trim(),
-        lat:        parseFloat(document.getElementById("lat").value),
-        lng:        parseFloat(document.getElementById("lng").value)
+        lat:        lat,
+        lng:        lng
       };
 
       if (!data.crop || !data.pest || data.damage === "") {
@@ -818,9 +830,14 @@
       records.push(data);
 
       sendToGoogleSheet(data);
-      addMarker(data);
+      updateMapMarkers();          // add marker based on current filters
+
+      // Focus the map on the new record
+      if (map && !isNaN(lat) && !isNaN(lng)) {
+        map.setView([lat, lng], 15);
+      }
+
       clearForm();
-      updateMapMarkers();
     }
 
     function clearAllRecordsUI() {
