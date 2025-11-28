@@ -558,14 +558,27 @@
       };
 
       if (L.markerClusterGroup) {
-        markersLayer = L.markerClusterGroup();
-        map.addLayer(markersLayer);
-        L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
-      } else {
-        console.warn("MarkerCluster plugin not loaded; using simple LayerGroup.");
-        markersLayer = L.layerGroup().addTo(map);
-        L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
-      }
+  // 👇 Customize cluster behavior so overlapping markers separate on click
+  markersLayer = L.markerClusterGroup({
+    showCoverageOnHover: false,      // optional: cleaner UI
+    zoomToBoundsOnClick: false,      // don't zoom; we'll spiderfy instead
+    spiderfyOnMaxZoom: false,        // we handle spiderfy manually
+    spiderfyDistanceMultiplier: 1.4  // spread the markers a bit more
+  });
+
+  // Always spiderfy the cluster when clicked
+  markersLayer.on('clusterclick', function (e) {
+    e.layer.spiderfy();
+  });
+
+  map.addLayer(markersLayer);
+  L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+} else {
+  console.warn("MarkerCluster plugin not loaded; using simple LayerGroup.");
+  markersLayer = L.layerGroup().addTo(map);
+  L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
+}
+
 
       updateZoomScaleClass();
       map.on('zoomend', updateZoomScaleClass);
@@ -1031,3 +1044,4 @@
   </script>
 </body>
 </html>
+
