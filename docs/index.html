@@ -1,7 +1,8 @@
- <!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pest Monitoring Tool – Cloud Sync + Map</title>
 
   <!-- Leaflet CSS -->
@@ -63,7 +64,7 @@
     }
 
     .field-group label {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 600;
       margin-bottom: 3px;
     }
@@ -71,8 +72,8 @@
     .field-group input,
     .field-group select,
     .field-group textarea {
-      padding: 5px 8px;
-      font-size: 0.9rem;
+      padding: 6px 9px;
+      font-size: 0.95rem;
       border: 1px solid #ccc;
       border-radius: 4px;
       width: 100%;
@@ -89,7 +90,7 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       margin-top: 8px;
       margin-right: 6px;
     }
@@ -132,13 +133,8 @@
       margin-top: 4px;
     }
 
-    .status-ok {
-      color: #2e7d32;
-    }
-
-    .status-error {
-      color: #c62828;
-    }
+    .status-ok { color: #2e7d32; }
+    .status-error { color: #c62828; }
 
     /* 🔥 Full-screen map section */
     #map {
@@ -164,68 +160,50 @@
       transition: transform 0.15s ease;
     }
 
-    .ring-low {
-      border-color: #2e7d32;
-    }
+    .ring-low { border-color: #2e7d32; }
+    .ring-moderate { border-color: #f9a825; }
+    .ring-high { border-color: #c62828; }
 
-    .ring-moderate {
-      border-color: #f9a825;
-    }
+    .zoom-small .crop-marker { transform: scale(0.7); }
+    .zoom-medium .crop-marker { transform: scale(0.9); }
+    .zoom-large .crop-marker { transform: scale(1.15); }
 
-    .ring-high {
-      border-color: #c62828;
-    }
+    .hidden { display: none !important; }
 
-    .zoom-small .crop-marker {
-      transform: scale(0.7);
-    }
-
-    .zoom-medium .crop-marker {
-      transform: scale(0.9);
-    }
-
-    .zoom-large .crop-marker {
-      transform: scale(1.15);
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* 📱 MOBILE: bigger fonts & comfy touch targets */
+    /* 📱 MOBILE: BIGGER EVERYTHING */
     @media (max-width: 768px) {
       body {
         margin: 0;
-        font-size: 24px;
+        font-size: 22px;              /* base text size */
       }
 
       .container {
-        padding: 16px;
+        padding: 14px;
         border-radius: 0;
         box-shadow: none;
       }
 
       h1 {
-        font-size: 2.1rem;
+        font-size: 2.2rem;
       }
 
       h2 {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
       }
 
       .note,
       .status {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
       }
 
       .field-group label {
-        font-size: 1.3rem;
+        font-size: 1.25rem;
       }
 
       .field-group input,
       .field-group select,
       .field-group textarea {
-        font-size: 1.3rem;
+        font-size: 1.25rem;          /* bigger controls */
         padding: 12px 14px;
       }
 
@@ -236,9 +214,8 @@
         padding: 14px 18px;
       }
 
-      /* Mobile full-screen map too */
       #map {
-        height: 100vh;
+        height: 100vh;               /* full-screen map on mobile */
         border-radius: 0;
       }
     }
@@ -393,7 +370,6 @@
 
         <div class="field-group">
           <label for="filterCrop">Filter by Crop</label>
-          <!-- 🌾 when crop changes, also update pest options -->
           <select id="filterCrop" onchange="onFilterCropChange();">
             <option value="">All crops</option>
             <option value="Rice">Rice</option>
@@ -537,7 +513,7 @@
     };
 
     const records = [];
-    let map, markersLayer, oms;   // include oms
+    let map, markersLayer, oms;
 
     function initMap() {
       map = L.map('map', {
@@ -583,10 +559,10 @@
         L.control.layers(baseLayers, { "Pest Records": markersLayer }).addTo(map);
       }
 
-      // OverlappingMarkerSpiderfier for overlapping individual markers
+      // OverlappingMarkerSpiderfier
       oms = new OverlappingMarkerSpiderfier(map, {
         keepSpiderfied: true,
-        nearbyDistance: 20 // pixels
+        nearbyDistance: 20
       });
 
       oms.addListener('click', function(marker) {
@@ -607,13 +583,9 @@
       const container = map.getContainer();
       container.classList.remove('zoom-small', 'zoom-medium', 'zoom-large');
 
-      if (z <= 6) {
-        container.classList.add('zoom-small');
-      } else if (z <= 10) {
-        container.classList.add('zoom-medium');
-      } else {
-        container.classList.add('zoom-large');
-      }
+      if (z <= 6)      container.classList.add('zoom-small');
+      else if (z <=10) container.classList.add('zoom-medium');
+      else             container.classList.add('zoom-large');
     }
 
     function autoFillDate() {
@@ -709,7 +681,7 @@
     }
 
     function updateSamplingUnits(crop, pestName) {
-      const su = document.getElementById("samplingUnit");
+      const su   = document.getElementById("samplingUnit");
       const hint = document.getElementById("samplingHint");
       su.innerHTML = "";
 
@@ -734,36 +706,34 @@
         su.appendChild(opt);
       });
 
-      if (hint) {
-        hint.textContent = label + units.join(", ");
-      }
+      if (hint) hint.textContent = label + units.join(", ");
     }
 
     function getCropEmoji(crop) {
       switch (crop) {
-        case "Rice": return "🌾";
-        case "Corn": return "🌽";
-        case "Cassava": return "🥔";
-        case "Tomato": return "🍅";
+        case "Rice":     return "🌾";
+        case "Corn":     return "🌽";
+        case "Cassava":  return "🥔";
+        case "Tomato":   return "🍅";
         case "Eggplant": return "🍆";
-        case "Okra": return "🥒";
-        default: return "🌱";
+        case "Okra":     return "🥒";
+        default:         return "🌱";
       }
     }
 
     function getSeverityRingClass(severity) {
-      if (severity === "Low") return "ring-low";
+      if (severity === "Low")      return "ring-low";
       if (severity === "Moderate") return "ring-moderate";
-      if (severity === "High") return "ring-high";
+      if (severity === "High")     return "ring-high";
       return "";
     }
 
     function makeCropIcon(crop, severity) {
-      const emoji = getCropEmoji(crop);
+      const emoji     = getCropEmoji(crop);
       const ringClass = getSeverityRingClass(severity);
-      const html = `<div class="crop-marker ${ringClass}">${emoji}</div>`;
+      const html      = `<div class="crop-marker ${ringClass}">${emoji}</div>`;
       return L.divIcon({
-        html: html,
+        html,
         className: "",
         iconSize: [20, 20],
         iconAnchor: [10, 10]
@@ -774,7 +744,7 @@
       if (!markersLayer) return;
       if (record.lat == null || isNaN(record.lat) || record.lng == null || isNaN(record.lng)) return;
 
-      const icon = makeCropIcon(record.crop, record.severity);
+      const icon  = makeCropIcon(record.crop, record.severity);
       const marker = L.marker([record.lat, record.lng], { icon });
       const popupContent = `
         <strong>${record.crop}</strong> – ${record.pest}<br/>
@@ -787,10 +757,7 @@
       marker.bindPopup(popupContent);
       markersLayer.addLayer(marker);
 
-      // Register with spiderfier so overlapping markers separate on click
-      if (oms) {
-        oms.addMarker(marker);
-      }
+      if (oms) oms.addMarker(marker);
     }
 
     function sendToGoogleSheet(data) {
@@ -807,9 +774,7 @@
       fetch(SHEET_WEBAPP_URL, {
         method: "POST",
         mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
       }).then(() => {
         if (status) {
@@ -827,21 +792,21 @@
 
     function addRecord() {
       const data = {
-        date: document.getElementById("date").value,
-        barangay: document.getElementById("barangay").value.trim(),
-        farmerId: document.getElementById("farmerId").value.trim(),
-        crop: document.getElementById("crop").value,
-        pest: document.getElementById("pest").value,
-        sci: document.getElementById("scientificName").value,
-        growth: document.getElementById("growthStage").value,
-        weather: document.getElementById("weather").value,
-        unit: document.getElementById("samplingUnit").value,
-        plants: document.getElementById("plantsSampled").value,
-        pestCount: document.getElementById("pestCount").value,
-        damage: document.getElementById("damage").value,
-        notes: document.getElementById("notes").value.trim(),
-        lat: parseFloat(document.getElementById("lat").value),
-        lng: parseFloat(document.getElementById("lng").value)
+        date:       document.getElementById("date").value,
+        barangay:   document.getElementById("barangay").value.trim(),
+        farmerId:   document.getElementById("farmerId").value.trim(),
+        crop:       document.getElementById("crop").value,
+        pest:       document.getElementById("pest").value,
+        sci:        document.getElementById("scientificName").value,
+        growth:     document.getElementById("growthStage").value,
+        weather:    document.getElementById("weather").value,
+        unit:       document.getElementById("samplingUnit").value,
+        plants:     document.getElementById("plantsSampled").value,
+        pestCount:  document.getElementById("pestCount").value,
+        damage:     document.getElementById("damage").value,
+        notes:      document.getElementById("notes").value.trim(),
+        lat:        parseFloat(document.getElementById("lat").value),
+        lng:        parseFloat(document.getElementById("lng").value)
       };
 
       if (!data.crop || !data.pest || data.damage === "") {
@@ -876,22 +841,22 @@
           clearAllRecordsUI();
           rows.forEach(r => {
             const rec = {
-              date: r.date || "",
-              barangay: r.barangay || "",
-              farmerId: r.farmerId || "",
-              crop: r.crop || "",
-              pest: r.pest || "",
-              sci: r.sci || "",
-              growth: r.growth || "",
-              weather: r.weather || "",
-              unit: r.unit || "",
-              plants: r.plants || "",
+              date:      r.date || "",
+              barangay:  r.barangay || "",
+              farmerId:  r.farmerId || "",
+              crop:      r.crop || "",
+              pest:      r.pest || "",
+              sci:       r.sci || "",
+              growth:    r.growth || "",
+              weather:   r.weather || "",
+              unit:      r.unit || "",
+              plants:    r.plants || "",
               pestCount: r.pestCount || "",
-              damage: r.damage || "",
-              severity: r.severity || "",
-              notes: r.notes || "",
-              lat: r.lat !== "" && r.lat !== null ? parseFloat(r.lat) : null,
-              lng: r.lng !== "" && r.lng !== null ? parseFloat(r.lng) : null
+              damage:    r.damage || "",
+              severity:  r.severity || "",
+              notes:     r.notes || "",
+              lat:       r.lat !== "" && r.lat !== null ? parseFloat(r.lat) : null,
+              lng:       r.lng !== "" && r.lng !== null ? parseFloat(r.lng) : null
             };
             records.push(rec);
           });
@@ -932,14 +897,10 @@
     function updateMapMarkers() {
       if (!markersLayer) return;
       markersLayer.clearLayers();
-
       const filtered = getFilteredRecords();
-      filtered.forEach(rec => {
-        addMarker(rec);
-      });
+      filtered.forEach(rec => addMarker(rec));
     }
 
-    // For the view filters: pest options depend on selected crop
     function updateFilterPestOptions() {
       const filterCrop = document.getElementById("filterCrop").value;
       const filterPest = document.getElementById("filterPest");
@@ -949,7 +910,6 @@
       filterPest.innerHTML = '<option value="">All pests</option>';
 
       if (filterCrop && pestMap[filterCrop]) {
-        // Only pests for the selected crop
         pestMap[filterCrop].forEach(p => {
           const opt = document.createElement("option");
           opt.value = p.common;
@@ -957,7 +917,6 @@
           filterPest.appendChild(opt);
         });
       } else {
-        // No crop selected -> show all pests (union)
         const pestSet = new Set();
         Object.keys(pestMap).forEach(crop => {
           pestMap[crop].forEach(p => pestSet.add(p.common));
@@ -970,16 +929,12 @@
         });
       }
 
-      // Try to keep previous selection if still valid
       if (previous) {
         const options = Array.from(filterPest.options).map(o => o.value);
-        if (options.includes(previous)) {
-          filterPest.value = previous;
-        }
+        if (options.includes(previous)) filterPest.value = previous;
       }
     }
 
-    // When filterCrop changes
     function onFilterCropChange() {
       updateFilterPestOptions();
       updateMapMarkers();
@@ -1002,43 +957,19 @@
       }
 
       const header = [
-        "Date",
-        "Barangay",
-        "Farmer/Field ID",
-        "Crop",
-        "Pest (Common)",
-        "Scientific Name",
-        "Growth Stage",
-        "Weather",
-        "Sampling Unit",
-        "No. Plants",
-        "Pest Count / Unit",
-        "% Damage",
-        "Severity",
-        "Notes",
-        "Latitude",
-        "Longitude"
+        "Date","Barangay","Farmer/Field ID","Crop","Pest (Common)","Scientific Name",
+        "Growth Stage","Weather","Sampling Unit","No. Plants","Pest Count / Unit",
+        "% Damage","Severity","Notes","Latitude","Longitude"
       ];
 
       const lines = [header.map(csvEscape).join(",")];
 
       filtered.forEach(r => {
         const row = [
-          r.date || "",
-          r.barangay || "",
-          r.farmerId || "",
-          r.crop || "",
-          r.pest || "",
-          r.sci || "",
-          r.growth || "",
-          r.weather || "",
-          r.unit || "",
-          r.plants || "",
-          r.pestCount || "",
-          r.damage || "",
-          r.severity || "",
-          r.notes || "",
-          r.lat != null ? r.lat : "",
+          r.date || "", r.barangay || "", r.farmerId || "", r.crop || "",
+          r.pest || "", r.sci || "", r.growth || "", r.weather || "",
+          r.unit || "", r.plants || "", r.pestCount || "", r.damage || "",
+          r.severity || "", r.notes || "", r.lat != null ? r.lat : "",
           r.lng != null ? r.lng : ""
         ];
         lines.push(row.map(csvEscape).join(","));
@@ -1046,8 +977,8 @@
 
       const csvContent = lines.join("\r\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
       const today = new Date().toISOString().slice(0,10);
       a.href = url;
       a.download = `pest_records_${today}.csv`;
@@ -1061,7 +992,7 @@
       initMap();
       autoFillDate();
       updateSamplingUnits("", "");
-      updateFilterPestOptions(); // initial populate for view filter
+      updateFilterPestOptions();
     });
   </script>
 </body>
