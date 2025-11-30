@@ -31,19 +31,60 @@
     body {
       font-family: Arial, sans-serif;
       margin: 16px;
-      /* 🌿 Green / light green gradient background */
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #c5e1a5 100%);
       font-size: 14px;
+
+      /* 🍃 Layered green background */
+      background:
+        radial-gradient(ellipse at 12% 18%, #c5e1a5 0, #c5e1a5 40px, transparent 41px),
+        radial-gradient(ellipse at 85% 10%, #aed581 0, #aed581 55px, transparent 56px),
+        radial-gradient(ellipse at 20% 85%, #9ccc65 0, #9ccc65 45px, transparent 46px),
+        radial-gradient(ellipse at 80% 78%, #a5d6a7 0, #a5d6a7 50px, transparent 51px),
+        radial-gradient(ellipse at 50% 50%, rgba(129,199,132,0.4) 0, rgba(129,199,132,0.4) 120px, transparent 121px),
+        linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 50%, #c5e1a5 100%);
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-size: cover;
+      position: relative;
+      overflow-x: hidden;
     }
+
+    /* 🍃 floating leafy emoji background layer */
+    .leafy-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .leaf {
+      position: fixed;
+      font-size: 4.2rem;     /* bigger so you NOTICE them */
+      opacity: 0.35;         /* more visible */
+      filter: blur(0.2px);
+      animation: floatLeaf 18s infinite alternate ease-in-out;
+    }
+
+    @keyframes floatLeaf {
+      0%   { transform: translateY(0) rotate(0deg); }
+      50%  { transform: translateY(-12px) rotate(6deg); }
+      100% { transform: translateY(8px) rotate(-5deg); }
+    }
+
+    .leaf1 { top: 6%;  left: 2%;  }
+    .leaf2 { top: 10%; right: 8%; }
+    .leaf3 { top: 42%; left: 5%;  }
+    .leaf4 { top: 60%; right: 6%; }
+    .leaf5 { bottom: 10%; left: 18%; }
+    .leaf6 { bottom: 8%; right: 12%; }
 
     h1, h2, h3 {
       margin-top: 0.5em;
       margin-bottom: 0.3em;
-      color: #1b5e20; /* deep green */
+      color: #1b5e20;
     }
 
     h1 {
-      background: #2e7d32;        /* olive-ish green header bar */
+      background: #2e7d32;
       color: #f9fbe7;
       padding: 10px 16px;
       border-radius: 8px;
@@ -58,6 +99,8 @@
       border-radius: 12px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.18);
       border: 1px solid #c5e1a5;
+      position: relative;
+      z-index: 1; /* sits ABOVE leafy emojis */
     }
 
     /* One field per line, always */
@@ -90,7 +133,7 @@
       border-radius: 4px;
       width: 100%;
       box-sizing: border-box;
-      background: #f9fbe7; /* light greenish input */
+      background: #f9fbe7;
     }
 
     .field-group input:focus,
@@ -117,12 +160,12 @@
     }
 
     .btn-primary {
-      background-color: #388e3c; /* green */
+      background-color: #388e3c;
       color: white;
     }
 
     .btn-secondary {
-      background-color: #c5e1a5; /* light green */
+      background-color: #c5e1a5;
       color: #1b5e20;
     }
 
@@ -136,7 +179,7 @@
       padding: 12px 12px 16px 12px;
       border-radius: 10px;
       border: 1px solid #c5e1a5;
-      background: rgba(241, 248, 233, 0.9);  /* pale green */
+      background: rgba(241, 248, 233, 0.9);
     }
 
     .section-map {
@@ -144,7 +187,7 @@
       padding: 12px 12px 16px 12px;
       border-radius: 10px;
       border: 1px solid #a5d6a7;
-      background: rgba(232, 245, 233, 0.95); /* another green tone */
+      background: rgba(232, 245, 233, 0.95);
     }
 
     .note {
@@ -162,22 +205,20 @@
     .status-ok { color: #2e7d32; }
     .status-error { color: #c62828; }
 
-    /* 🔥 Full-screen map section */
     #map {
       width: 100%;
-      height: 100vh;   /* full viewport height */
+      height: 100vh;
       margin-top: 8px;
       border-radius: 8px;
       border: 2px solid #a5d6a7;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    /* Base crop-marker style */
     .crop-marker {
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      border: 2px solid #2e7d32; /* green border */
+      border: 2px solid #2e7d32;
       background-color: #f1f8e9;
       display: flex;
       align-items: center;
@@ -187,9 +228,9 @@
       transition: transform 0.15s ease;
     }
 
-    .ring-low { border-color: #2e7d32; }    /* green */
-    .ring-moderate { border-color: #f9a825; } /* yellow */
-    .ring-high { border-color: #c62828; }     /* red */
+    .ring-low { border-color: #2e7d32; }
+    .ring-moderate { border-color: #f9a825; }
+    .ring-high { border-color: #c62828; }
 
     .zoom-small .crop-marker { transform: scale(0.7); }
     .zoom-medium .crop-marker { transform: scale(0.9); }
@@ -197,11 +238,11 @@
 
     .hidden { display: none !important; }
 
-    /* 📱 MOBILE: BIGGER EVERYTHING */
+    /* 📱 MOBILE */
     @media (max-width: 768px) {
       body {
         margin: 0;
-        font-size: 22px;              /* base text size */
+        font-size: 22px;
       }
 
       .container {
@@ -233,7 +274,7 @@
       .field-group input,
       .field-group select,
       .field-group textarea {
-        font-size: 1.25rem;          /* bigger controls */
+        font-size: 1.25rem;
         padding: 12px 14px;
       }
 
@@ -245,17 +286,33 @@
       }
 
       #map {
-        height: 100vh;               /* full-screen map on mobile */
+        height: 100vh;
         border-radius: 0;
         border-left: none;
         border-right: none;
+      }
+
+      .leaf {
+        font-size: 3.4rem;
+        opacity: 0.3;
       }
     }
   </style>
 </head>
 <body>
+
+  <!-- 🍃 LEAFY EMOJI BACKGROUND LAYER -->
+  <div class="leafy-bg">
+    <div class="leaf leaf1">🍃</div>
+    <div class="leaf leaf2">🌿</div>
+    <div class="leaf leaf3">🍃</div>
+    <div class="leaf leaf4">🌿</div>
+    <div class="leaf leaf5">🍃</div>
+    <div class="leaf leaf6">🌿</div>
+  </div>
+
   <div class="container">
-    <h1>Pest Monitoring Tool – Cloud Sync + Map</h1>
+    <h1>Pestilog - Farmer's Monitoring Tool</h1>
     <p class="note">
       Severity rule: <strong>Low</strong> &lt; 10% &nbsp;&nbsp;|&nbsp;&nbsp;
       <strong>Moderate</strong> 10–30% &nbsp;&nbsp;|&nbsp;&nbsp;
